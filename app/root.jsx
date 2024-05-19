@@ -9,11 +9,14 @@ import {
   useLoaderData,
   ScrollRestoration,
   isRouteErrorResponse,
+  useLocation,
+  useOutlet,
 } from '@remix-run/react';
 import favicon from './assets/favicon.svg';
 import resetStyles from './styles/reset.css?url';
 import appStyles from './styles/app.css?url';
 import {Layout} from '~/components/Layout';
+import {AnimatePresence, motion} from 'framer-motion';
 
 /**
  * This is important to avoid re-fetching root queries on sub-navigations
@@ -95,6 +98,14 @@ export default function App() {
   const nonce = useNonce();
   /** @type {LoaderReturnData} */
   const data = useLoaderData();
+  const location = useLocation();
+  const outlet = useOutlet();
+
+  const variants = {
+    initial: {opacity: 0, x: 100},
+    enter: {opacity: 1, x: 0, transition: {duration: 0.5}},
+    exit: {opacity: 0, x: -100, transition: {duration: 0.5}},
+  };
 
   return (
     <html lang="en">
@@ -105,8 +116,21 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <Layout {...data}>
-          <Outlet />
+      <Layout {...data}>
+          <AnimatePresence mode="await" initial={false}>
+            <motion.div
+              key={location.pathname}
+              initial="initial"
+              animate="enter"
+              exit="exit"
+              variants={variants}
+              style={{ position: 'absolute', width: '100%' }}
+              onAnimationStart={(e) => console.log('Animation started: ', e)}
+              onAnimationComplete={(e) => console.log('Animation completed: ', e)}
+            >
+            <Outlet/>
+            </motion.div>
+          </AnimatePresence>
         </Layout>
         <ScrollRestoration nonce={nonce} />
         <Scripts nonce={nonce} />
